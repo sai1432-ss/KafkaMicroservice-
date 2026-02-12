@@ -269,11 +269,7 @@ Environment configuration template.
 
 ---
 
-## 📜 License
 
-This project is licensed under the MIT License.
-
----
 
 ## 💡 What This Project Demonstrates
 
