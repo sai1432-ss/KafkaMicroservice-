@@ -1,143 +1,288 @@
-Kafka Microservice - Event Processing System
-============================================
+# Kafka Microservice - Event Processing System
 
-📖 Project Overview
--------------------
+## 📖 Project Overview
 
-This project represents a robust, production-ready blueprint for a distributed event-driven microservice architecture. Built using **Node.js** and **Express**, it integrates seamlessly with **Apache Kafka** to demonstrate core principles of modern backend engineering.
+This project is a resilient, event-driven microservice built with **Node.js**, **Express**, and **Apache Kafka**. It demonstrates a production-ready architecture acting as both a **Producer** (generating events) and a **Consumer** (processing events with idempotency checks).
 
-The service is designed to handle the full lifecycle of a **UserEvent**: acting as a **Producer** that ingests and validates API requests, and a **Consumer** that processes these messages asynchronously. A key focus of this implementation is **Idempotency**—ensuring that even if Kafka redelivers a message (a common occurrence in distributed systems), the application processes it exactly once, maintaining data integrity.
+The system ensures data integrity by preventing duplicate event processing and provides RESTful APIs for interaction and verification.
 
-🏗️ Architectural Overview
---------------------------
+---
 
-The system is containerized using Docker Compose and consists of three distinct components interacting in real-time:
+## 🚀 Key Features
 
-1.  **Zookeeper**: The coordination service responsible for managing the Kafka cluster state and configuration.
-    
-2.  **Kafka Broker**: The central message bus. It hosts the user-activity-events topic where all immutable event logs are stored.
-    
-3.  **App Service (Node.js)**: A single microservice that performs three roles:
-    
-    *   **API Layer**: Exposes REST endpoints for external clients to generate events and query data.
-        
-    *   **Producer Client**: Validates incoming JSON payloads, appends metadata (UUID, ISO Timestamps), and publishes to Kafka.
-        
-    *   **Consumer Client**: Listens to the topic as part of the user-activity-consumer-group, filtering duplicates before storing valid events in an in-memory database.
-        
+* **Event Producer** → Validates and publishes user activity events to Kafka.
+* **Event Consumer** → Asynchronously processes events and stores them in memory.
+* **Idempotency Protection** → Prevents duplicate processing using unique Event IDs.
+* **Dockerized Infrastructure** → Zookeeper, Kafka, and App orchestrated via Docker Compose.
+* **Health Checks** → Container startup validation and dependency readiness.
 
-🚀 Key Features
----------------
+---
 
-*   **Robust Event Producer**: The system exposes a clean RESTful POST endpoint. It enforces a strict schema validation, ensuring every event contains a userId and eventType before it is serialized and sent to the broker.
-    
-*   **Scalable Consumer Groups**: The consumer is configured with a specific groupId (user-activity-consumer-group). This design pattern allows the system to scale horizontally; if we added more instances of this service, Kafka would automatically load-balance the partitions among them.
-    
-*   **Idempotency & Data Integrity**: Since Kafka guarantees "at-least-once" delivery, duplicate messages are possible. This service implements logic to check every incoming eventId against the local data store. If a duplicate is detected, it is logged and gracefully skipped, preventing data corruption.
-    
-*   **In-Memory Persistence**: For demonstration purposes, processed events are stored in a resilient in-memory array, allowing for immediate retrieval and verification via the Query API.
-    
-*   **Containerized Health Checks**: The docker-compose.yml includes sophisticated health checks. The application waits until Kafka is fully operational before attempting to connect, preventing startup race conditions.
-    
+## 🛠️ Prerequisites
 
-🛠️ Prerequisites
------------------
+* Docker
+* Docker Compose
+* Git
+* Node.js v18+
 
-To run this system, ensure your environment meets the following requirements:
+---
 
-*   **Docker & Docker Compose**: Required to orchestrate the multi-container environment (Zookeeper, Kafka, App).
-    
-*   **Node.js (v18+)**: Optional. Only required if you intend to run unit tests locally without Docker.
-    
-*   **API Client**: Tools like Postman, Insomnia, or cURL to interact with the HTTP endpoints.
-    
+## 📦 Installation & Setup
 
-📦 Installation & Detailed Setup
---------------------------------
+Follow these steps to get the system running.
 
-1.  git clone cd kafka-microservice
-    
-2.  docker-compose up -d --build
-    
-3.  docker-compose ps_Look for a status of Up (healthy) for all three services._
-    
+### 1️⃣ Clone the Repository
 
-🔌 API Documentation
---------------------
+```bash
+git clone https://github.com/sai1432-ss/kafka-microservice-.git
+cd kafka-microservice-
+```
 
-### 1\. Generate Event (Producer)
+---
 
-This endpoint acts as the entry point for the system. It accepts raw user activity data and transforms it into a standardized UserEvent.
+### 2️⃣ Configure Environment Variables
 
-*   **Endpoint**: POST http://localhost:3000/events/generate
-    
-*   **Content-Type**: application/json
-    
+Create your runtime environment file:
 
-**Request Body Schema:**The payload field is flexible and can store any event-specific metadata (e.g., location, device info, browser type).
+```bash
+cp .env.example .env
+```
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   {    "userId": "user_LE5",    "eventType": "LOGIN",         // Required: Type of activity (LOGIN, LOGOUT, etc.)    "payload": {      "device": "Pixel 9",      "region": "India"    }  }   `
 
-**Response:**
+---
 
-*   { "status": "Created", "eventId": "550e8400-e29b-41d4-a716-446655440000"}
-    
-*   **400 Bad Request**: The request failed validation (missing userId or eventType).
-    
-*   **500 Internal Server Error**: The service could not connect to the Kafka broker.
-    
+### 3️⃣ Start the Services
 
-### 2\. Query Processed Events (Consumer)
+Build images and start all containers:
 
-This endpoint exposes the state of the in-memory database, allowing you to verify that events have been consumed and stored correctly.
+```bash
+docker-compose up -d --build
+```
 
-*   **Endpoint**: GET http://localhost:3000/events/processed
-    
+This starts:
 
-**Response:**Returns a JSON array of all unique UserEvent objects currently held in memory.
+* Zookeeper
+* Kafka Broker
+* Node.js Microservice
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   [    {      "eventId": "550e8400-e29b-41d4-a716-446655440000",      "userId": "user_LE5",      "eventType": "LOGIN",      "timestamp": "2026-02-12T10:00:00.000Z",      "payload": { "device": "Pixel 9", "region": "India" }    },    ...  ]   `
+---
 
-🧪 Comprehensive Testing Strategy
----------------------------------
+### 4️⃣ Verify System Status
 
-This project utilizes a dual-layer testing strategy to ensure both code correctness and system stability. You can run tests either inside the Docker container (Recommended) or locally.
+Ensure all services are running and healthy:
 
-### Option 1: Running Tests Inside Docker (Recommended)
+```bash
+docker-compose ps
+```
 
-This method ensures tests run in the exact environment where the code is deployed. We use docker cp to ensure the latest test scripts are present in the container before execution.
+Expected status:
 
-**1\. Unit Tests (Logic Isolation)**Verifies schema generation and idempotency logic without external dependencies.
+```
+Up (healthy)
+```
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   docker cp unit.test.js kafka-microservice-app-service-1:/app/unit.test.js; docker exec -it kafka-microservice-app-service-1 node unit.test.js   `
+---
 
-**2\. Integration Tests (End-to-End)**Validates the full flow: Producer API -> Kafka -> Consumer -> Database.
+## 🔌 API Documentation
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   docker cp test.js kafka-microservice-app-service-1:/app/test.js; docker exec -it kafka-microservice-app-service-1 node test.js   `
+You can interact using **Postman**.
 
-### Option 2: Running Tests Locally (Windows PowerShell)
+Base URL:
 
-Use this method for rapid development cycles without entering the container.
+```
+http://localhost:3000
+```
 
-**1\. Install Dependencies**Required only once to download kafkajs, express, etc. to your machine.
+---
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   npm install   `
+## 1️⃣ Generate Event (Producer)
 
-**2\. Run Unit Tests**
+Publishes a user activity event to Kafka.
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   node unit.test.js   `
+### Postman Configuration
 
-**3\. Run Integration Tests**We set the KAFKA\_BROKERS environment variable to localhost:9092 so the script connects to the exposed Docker port.
+**Method:** POST
+**URL:**
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   $env:KAFKA_BROKERS = "localhost:9092"  node test.js   `
+```
+http://localhost:3000/events/generate
+```
 
-📂 Project Structure
---------------------
+**Headers**
 
-*   index.js: The monolithic entry point. It initializes the Express server, configures the Kafka Producer/Consumer, and contains the core event loop logic.
-    
-*   docker-compose.yml: Infrastructure as Code (IaC) file defining the Zookeeper and Kafka services, network bridges, and environment variables.
-    
-*   unit.test.js: Standalone test suite using Node.js assertions to validate helper functions.
-    
-*   test.js: An automated script acting as an external client to verify system behavior and idempotency.
+| Key          | Value            |
+| ------------ | ---------------- |
+| Content-Type | application/json |
+
+**Body → raw → JSON**
+
+```json
+{
+  "userId": "user_123",
+  "eventType": "LOGIN",
+  "payload": {
+    "device": "Pixel 9"
+  }
+}
+```
+
+---
+
+### Success Response (201 Created)
+
+```json
+{
+  "status": "Created",
+  "eventId": "550e8400-e29b-41d4-a716-446655440000"
+}
+```
+
+---
+
+## 2️⃣ Check Processed Events (Consumer)
+
+Retrieve all processed unique events.
+
+### Postman Configuration
+
+**Method:** GET
+**URL:**
+
+```
+http://localhost:3000/events/processed
+```
+
+No body required.
+
+---
+
+### Example Response
+
+```json
+[
+  {
+    "eventId": "550e8400-e29b-41d4-a716-446655440000",
+    "userId": "user_123",
+    "eventType": "LOGIN",
+    "timestamp": "2026-02-12T10:00:00.000Z",
+    "payload": {
+      "device": "Pixel 9"
+    }
+  }
+]
+```
+
+---
+
+## 🧪 Running Tests
+
+The project includes automated tests for logic and full system behavior.
+
+---
+
+### Option 1 — Run Inside Docker (Recommended)
+
+Ensures consistent runtime environment.
+
+#### Run Unit Tests
+
+```bash
+docker cp unit.test.js kafka-microservice-app-service-1:/app/unit.test.js
+docker exec -it kafka-microservice-app-service-1 node unit.test.js
+```
+
+---
+
+#### Run Integration Tests
+
+```bash
+docker cp test.js kafka-microservice-app-service-1:/app/test.js
+docker exec -it kafka-microservice-app-service-1 node test.js
+```
+
+---
+
+### Option 2 — Run Locally
+
+Requires Node.js installed.
+
+#### Install Dependencies
+
+```bash
+npm install
+```
+
+#### Run Unit Tests
+
+```bash
+node unit.test.js
+```
+
+---
+
+#### Run Integration Tests
+
+Docker containers must already be running.
+
+**Windows PowerShell**
+
+```bash
+$env:KAFKA_BROKERS="localhost:9092";
+node test.js
+```
+
+
+
+## 📂 Project Structure
+
+```
+.
+├── index.js
+├── docker-compose.yml
+├── unit.test.js
+├── test.js
+├── .env.example
+└── README.md
+```
+
+### File Descriptions
+
+**index.js**
+Main application entry point. Contains:
+
+* Express server
+* Kafka producer
+* Kafka consumer
+* Idempotency logic
+
+**docker-compose.yml**
+Defines Zookeeper, Kafka, networking, and health checks.
+
+**unit.test.js**
+Standalone unit tests for business logic.
+
+**test.js**
+End-to-end integration test script.
+
+**.env.example**
+Environment configuration template.
+
+---
+
+## 📜 License
+
+This project is licensed under the MIT License.
+
+---
+
+## 💡 What This Project Demonstrates
+
+* Event-driven microservices
+* Kafka producer / consumer workflow
+* Consumer groups and scaling
+* Idempotent event processing
+* Docker-based distributed systems
+* Health‑checked container startup
+
+---
+
