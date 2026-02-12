@@ -34,8 +34,8 @@ Follow these steps to get the system running.
 ### 1️⃣ Clone the Repository
 
 ```bash
-git clone https://github.com/sai1432-ss/kafka-microservice-.git
-cd kafka-microservice-
+git clone https://github.com/sai1432-ss/KafkaMicroservice-.git
+cd KafkaMicroservice-
 ```
 
 ---
